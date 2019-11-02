@@ -8,7 +8,6 @@ import (
 
 type BinaryTree struct {
 	count int
-	order int
 	root  *BinaryTreeNode
 }
 
@@ -19,12 +18,20 @@ type BinaryTreeNode struct {
 	right *BinaryTreeNode
 }
 
+func (binaryTree *BinaryTree) Clear() {
+	binaryTree.root = NewBinaryTreeNode()
+}
+
 func (binaryTreeNode *BinaryTreeNode) IsRoot() bool {
-	return binaryTreeNode.order == 0
+	return binaryTreeNode.order == 1
 }
 
 func (binaryTreeNode *BinaryTreeNode) IsLeaf() bool {
 	return binaryTreeNode.left == binaryTreeNode.right && binaryTreeNode.right == nil
+}
+
+func (binaryTreeNode *BinaryTreeNode) Value() int {
+	return binaryTreeNode.value
 }
 
 func NewBinaryTreeNode() *BinaryTreeNode {
@@ -32,7 +39,7 @@ func NewBinaryTreeNode() *BinaryTreeNode {
 }
 
 func NewBinaryTree() *BinaryTree {
-	return &BinaryTree{0, 0, nil}
+	return &BinaryTree{0, nil}
 }
 
 func (binaryTree *BinaryTree) Empty() bool {
@@ -74,10 +81,10 @@ func (binaryTree *BinaryTree) Push(value int) bool {
 	}
 
 	binaryTreeNode.value = value
-	binaryTreeNode.order = binaryTree.order
 
 	binaryTree.count++
-	binaryTree.order++
+
+	binaryTreeNode.order = binaryTree.count
 	return true
 }
 
@@ -194,4 +201,30 @@ func (binaryTree *BinaryTree) ToString() string {
 	}
 
 	return buffer.String()
+}
+
+func (binaryTree *BinaryTree) Tail() *BinaryTreeNode {
+	if !binaryTree.Empty() {
+		var queue []*BinaryTreeNode = []*BinaryTreeNode{binaryTree.root}
+
+		for len(queue) > 0 {
+			var node *BinaryTreeNode = queue[0]
+
+			if node.order == binaryTree.count {
+				return node
+			} else {
+				if node.left != nil {
+					queue = append(queue, node.left)
+				}
+
+				if node.right != nil {
+					queue = append(queue, node.right)
+				}
+			}
+
+			queue = queue[1:]
+		}
+	}
+
+	return nil
 }

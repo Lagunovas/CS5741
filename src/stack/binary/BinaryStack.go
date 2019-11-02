@@ -7,52 +7,42 @@ import (
 )
 
 type BinaryStack struct {
-	bt    *binaryTree.BinaryTree
-	order int
+	bt *binaryTree.BinaryTree
 }
 
 func NewBinaryStack() *BinaryStack {
-	return &BinaryStack{binaryTree.NewBinaryTree(), 0}
+	return &BinaryStack{binaryTree.NewBinaryTree()}
 }
 
 func (binaryStack *BinaryStack) Push(value int) {
-	// arrayStack.items = append(arrayStack.items, value)
-	// arrayStack.size++
 	binaryStack.bt.Push(value)
 }
 
 func (binaryStack *BinaryStack) Pop() (bool, int) {
-	var removed, value = binaryStack.bt.Remove(binaryStack.order)
-
-	if removed {
-		binaryStack.order++
-	}
-
-	return removed, value
+	return binaryStack.bt.Remove(binaryStack.Size())
 }
 
-// func (binaryStack *BinaryStack) Peek() int {
-// 	var item int
+func (binaryStack *BinaryStack) Peek() (bool, int) {
+	topElement := binaryStack.bt.Tail()
 
-// 	if !arrayStack.Empty() {
-// 		item = arrayStack.items[arrayStack.size-1]
-// 	}
+	if topElement != nil {
+		return true, topElement.Value()
+	}
 
-// 	return item
-// }
+	return false, 0
+}
 
-// func (binaryStack *BinaryStack) Empty() bool {
-// 	return arrayStack.size == 0
-// }
+func (binaryStack *BinaryStack) Empty() bool {
+	return binaryStack.bt.Empty()
+}
 
 func (binaryStack *BinaryStack) Size() int {
 	return binaryStack.bt.Size()
 }
 
-// func (binaryStack *BinaryStack) Clear() {
-// 	arrayStack.items = nil
-// 	arrayStack.size = 0
-// }
+func (binaryStack *BinaryStack) Clear() {
+	binaryStack.bt.Clear()
+}
 
 func main() {
 	var bs *BinaryStack = NewBinaryStack()

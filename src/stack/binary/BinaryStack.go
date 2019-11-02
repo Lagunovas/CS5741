@@ -1,8 +1,6 @@
-package main
+package binaryStack
 
 import (
-	"fmt"
-
 	binaryTree "github.com/CS5741/src/shared"
 )
 
@@ -42,26 +40,4 @@ func (binaryStack *BinaryStack) Size() int {
 
 func (binaryStack *BinaryStack) Clear() {
 	binaryStack.bt.Clear()
-}
-
-func main() {
-	var bs *BinaryStack = NewBinaryStack()
-	bs.Push(3)
-	bs.Push(2)
-	bs.Push(1)
-
-	fmt.Printf("1 size: %d\n", bs.Size())
-
-	var r, v = bs.Pop()
-
-	fmt.Printf("r: %v, v: %v\n", r, v)
-	fmt.Printf("2 size: %d\n", bs.Size())
-	r, v = bs.Pop()
-
-	fmt.Printf("r: %v, v: %v\n", r, v)
-	fmt.Printf("2 size: %d\n", bs.Size())
-	r, v = bs.Pop()
-
-	fmt.Printf("r: %v, v: %v\n", r, v)
-	fmt.Printf("2 size: %d\n", bs.Size())
 }

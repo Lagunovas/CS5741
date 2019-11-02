@@ -1,32 +1,33 @@
-package main
+package binarytree
 
-// package binarytree
-
-import "fmt"
+import (
+	"bytes"
+	"strconv"
+)
 
 type BinaryTree struct {
 	count int
 	order int
-	root  *Node
+	root  *BinaryTreeNode
 }
 
-type Node struct {
+type BinaryTreeNode struct {
 	order int
 	value int
-	left  *Node
-	right *Node
+	left  *BinaryTreeNode
+	right *BinaryTreeNode
 }
 
-func (node *Node) IsRoot() bool {
-	return node.order == 0
+func (binaryTreeNode *BinaryTreeNode) IsRoot() bool {
+	return binaryTreeNode.order == 0
 }
 
-func (node *Node) IsLeaf() bool {
-	return node.left == node.right && node.right == nil
+func (binaryTreeNode *BinaryTreeNode) IsLeaf() bool {
+	return binaryTreeNode.left == binaryTreeNode.right && binaryTreeNode.right == nil
 }
 
-func NewNode() *Node {
-	return &Node{0, 0, nil, nil}
+func NewBinaryTreeNode() *BinaryTreeNode {
+	return &BinaryTreeNode{0, 0, nil, nil}
 }
 
 func NewBinaryTree() *BinaryTree {
@@ -42,28 +43,28 @@ func (binaryTree *BinaryTree) Size() int {
 }
 
 func (binaryTree *BinaryTree) Push(value int) bool {
-	var node *Node = binaryTree.root
+	var binaryTreeNode *BinaryTreeNode = binaryTree.root
 
 	if binaryTree.Empty() {
-		binaryTree.root = NewNode()
-		node = binaryTree.root
+		binaryTree.root = NewBinaryTreeNode()
+		binaryTreeNode = binaryTree.root
 	} else {
 		for {
-			if value < node.value {
-				if node.left == nil {
-					node.left = NewNode()
-					node = node.left
+			if value < binaryTreeNode.value {
+				if binaryTreeNode.left == nil {
+					binaryTreeNode.left = NewBinaryTreeNode()
+					binaryTreeNode = binaryTreeNode.left
 					break
 				} else {
-					node = node.left
+					binaryTreeNode = binaryTreeNode.left
 				}
-			} else if value > node.value {
-				if node.right == nil {
-					node.right = NewNode()
-					node = node.right
+			} else if value > binaryTreeNode.value {
+				if binaryTreeNode.right == nil {
+					binaryTreeNode.right = NewBinaryTreeNode()
+					binaryTreeNode = binaryTreeNode.right
 					break
 				} else {
-					node = node.right
+					binaryTreeNode = binaryTreeNode.right
 				}
 			} else {
 				return false
@@ -71,23 +72,117 @@ func (binaryTree *BinaryTree) Push(value int) bool {
 		}
 	}
 
-	node.value = value
-	node.order = binaryTree.order
+	binaryTreeNode.value = value
+	binaryTreeNode.order = binaryTree.order
 
 	binaryTree.count++
 	binaryTree.order++
 	return true
 }
 
-// Level Order Traversal (BFS)
-func (BinaryTree *BinaryTree) Print() string {
-	return "asd"
+// In Order Traversal
+func (binaryTree *BinaryTree) Remove(order int) bool {
+	if !binaryTree.Empty() {
+		var stack []*BinaryTreeNode
+		currentBinaryTreeNode := binaryTree.root
+		var stackSize int = len(stack)
+
+		var currentParentBinaryTreeNode *BinaryTreeNode
+
+		for {
+			if currentBinaryTreeNode == nil {
+				if stackSize > 0 {
+					var poppedElement = stack[stackSize-1]
+					stack = stack[:stackSize-1]
+					currentBinaryTreeNode = poppedElement.right
+					currentParentBinaryTreeNode = poppedElement
+				} else {
+					break
+				}
+			} else {
+				if currentBinaryTreeNode.order == order {
+					if currentBinaryTreeNode.IsLeaf() {
+						if currentBinaryTreeNode.IsRoot() {
+							binaryTree.root = nil
+						} else {
+							if currentParentBinaryTreeNode.left == currentBinaryTreeNode {
+								currentParentBinaryTreeNode.left = nil
+							} else {
+								currentParentBinaryTreeNode.right = nil
+							}
+						}
+
+						return true
+					} else if currentBinaryTreeNode.left != nil && currentBinaryTreeNode.right != nil {
+						minimum := currentBinaryTreeNode.right
+
+						for {
+							if minimum.left != nil {
+								currentParentBinaryTreeNode = minimum
+								minimum = minimum.left
+							} else {
+								break
+							}
+						}
+
+						currentBinaryTreeNode.value = minimum.value
+						currentBinaryTreeNode.order = minimum.order
+						currentParentBinaryTreeNode.left = nil
+
+						return true
+					} else {
+						toMove := currentBinaryTreeNode.left
+
+						if currentBinaryTreeNode.right != nil {
+							toMove = currentBinaryTreeNode.right
+						}
+
+						parent := stack[stackSize-2]
+
+						if parent.left == currentBinaryTreeNode {
+							parent.left = toMove
+						} else if parent.right == currentBinaryTreeNode {
+							parent.right = toMove
+						}
+
+						return true
+					}
+				}
+
+				stack = append(stack, currentBinaryTreeNode)
+				currentParentBinaryTreeNode = currentBinaryTreeNode
+				currentBinaryTreeNode = currentBinaryTreeNode.left
+			}
+
+			stackSize = len(stack)
+		}
+	}
+
+	return false
 }
 
-func main() {
-	var binaryTree *BinaryTree = NewBinaryTree()
-	fmt.Print(binaryTree.Push(5))
-	fmt.Print(binaryTree.Push(6))
-	fmt.Print(binaryTree.Push(4))
-	fmt.Print(binaryTree.count)
+// Level Order Traversal (BFS)
+func (binaryTree *BinaryTree) ToString() string {
+	var buffer bytes.Buffer
+
+	if !binaryTree.Empty() {
+		var queue []*BinaryTreeNode = []*BinaryTreeNode{binaryTree.root}
+
+		for len(queue) > 0 {
+			var node *BinaryTreeNode = queue[0]
+			buffer.WriteString(strconv.Itoa(node.value) + " ")
+
+			if node.left != nil {
+				queue = append(queue, node.left)
+			}
+
+			if node.right != nil {
+				queue = append(queue, node.right)
+			}
+
+			queue = queue[1:]
+		}
+	}
+
+	return buffer.String()
 }

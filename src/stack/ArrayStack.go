@@ -1,24 +1,21 @@
-package stack
+package arrayStack
 
 type ArrayStack struct {
-	items []interface{}
+	items []int
 	size  int
 }
 
-func NewStack() *ArrayStack {
-	return &ArrayStack{
-		items: []interface{}{},
-		size:  0,
-	}
+func NewArrayStack() *ArrayStack {
+	return &ArrayStack{make([]int, 0), 0}
 }
 
-func (arrayStack *ArrayStack) Push(value interface{}) {
+func (arrayStack *ArrayStack) Push(value int) {
 	arrayStack.items = append(arrayStack.items, value)
 	arrayStack.size++
 }
 
-func (arrayStack *ArrayStack) Pop() interface{} {
-	var item interface{}
+func (arrayStack *ArrayStack) Pop() int {
+	var item int
 
 	if !arrayStack.Empty() {
 		item = arrayStack.items[arrayStack.size-1]
@@ -29,11 +26,11 @@ func (arrayStack *ArrayStack) Pop() interface{} {
 	return item
 }
 
-func (arrayStack *ArrayStack) Peek() *interface{} {
-	var item *interface{}
+func (arrayStack *ArrayStack) Peek() int {
+	var item int
 
 	if !arrayStack.Empty() {
-		item = &arrayStack.items[arrayStack.size-1]
+		item = arrayStack.items[arrayStack.size-1]
 	}
 
 	return item

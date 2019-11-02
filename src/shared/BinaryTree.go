@@ -1,7 +1,8 @@
-package binarytree
+package binaryTree
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 )
 
@@ -81,7 +82,7 @@ func (binaryTree *BinaryTree) Push(value int) bool {
 }
 
 // In Order Traversal
-func (binaryTree *BinaryTree) Remove(order int) bool {
+func (binaryTree *BinaryTree) Remove(order int) (bool, int) {
 	if !binaryTree.Empty() {
 		var stack []*BinaryTreeNode
 		currentBinaryTreeNode := binaryTree.root
@@ -101,6 +102,7 @@ func (binaryTree *BinaryTree) Remove(order int) bool {
 				}
 			} else {
 				if currentBinaryTreeNode.order == order {
+					removedValue := currentBinaryTreeNode.value
 					if currentBinaryTreeNode.IsLeaf() {
 						if currentBinaryTreeNode.IsRoot() {
 							binaryTree.root = nil
@@ -112,7 +114,8 @@ func (binaryTree *BinaryTree) Remove(order int) bool {
 							}
 						}
 
-						return true
+						binaryTree.count--
+						return true, removedValue
 					} else if currentBinaryTreeNode.left != nil && currentBinaryTreeNode.right != nil {
 						minimum := currentBinaryTreeNode.right
 
@@ -129,7 +132,8 @@ func (binaryTree *BinaryTree) Remove(order int) bool {
 						currentBinaryTreeNode.order = minimum.order
 						currentParentBinaryTreeNode.left = nil
 
-						return true
+						binaryTree.count--
+						return true, removedValue
 					} else {
 						toMove := currentBinaryTreeNode.left
 
@@ -137,15 +141,20 @@ func (binaryTree *BinaryTree) Remove(order int) bool {
 							toMove = currentBinaryTreeNode.right
 						}
 
-						parent := stack[stackSize-2]
-
-						if parent.left == currentBinaryTreeNode {
-							parent.left = toMove
-						} else if parent.right == currentBinaryTreeNode {
-							parent.right = toMove
+						if currentParentBinaryTreeNode == nil {
+							currentParentBinaryTreeNode = binaryTree.root
 						}
 
-						return true
+						fmt.Printf("parent: %v\n", currentParentBinaryTreeNode)
+
+						if currentParentBinaryTreeNode.left == currentBinaryTreeNode {
+							currentParentBinaryTreeNode.left = toMove
+						} else if currentParentBinaryTreeNode.right == currentBinaryTreeNode {
+							currentParentBinaryTreeNode.right = toMove
+						}
+
+						binaryTree.count--
+						return true, removedValue
 					}
 				}
 
@@ -158,7 +167,7 @@ func (binaryTree *BinaryTree) Remove(order int) bool {
 		}
 	}
 
-	return false
+	return false, 0
 }
 
 // Level Order Traversal (BFS)

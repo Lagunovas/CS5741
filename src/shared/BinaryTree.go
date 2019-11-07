@@ -2,7 +2,6 @@ package binaryTree
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 )
 
@@ -51,6 +50,10 @@ func (binaryTree *BinaryTree) Size() int {
 }
 
 func (binaryTree *BinaryTree) Push(value int) bool {
+	return binaryTree.PushOrder(value, binaryTree.count+1)
+}
+
+func (binaryTree *BinaryTree) PushOrder(value, order int) bool {
 	var binaryTreeNode *BinaryTreeNode = binaryTree.root
 
 	if binaryTree.Empty() {
@@ -84,7 +87,7 @@ func (binaryTree *BinaryTree) Push(value int) bool {
 
 	binaryTree.count++
 
-	binaryTreeNode.order = binaryTree.count
+	binaryTreeNode.order = order
 	return true
 }
 
@@ -144,20 +147,18 @@ func (binaryTree *BinaryTree) Remove(order int) (bool, int) {
 					} else {
 						toMove := currentBinaryTreeNode.left
 
-						if currentBinaryTreeNode.right != nil {
+						if toMove == nil {
 							toMove = currentBinaryTreeNode.right
 						}
 
 						if currentParentBinaryTreeNode == nil {
-							currentParentBinaryTreeNode = binaryTree.root
-						}
-
-						fmt.Printf("parent: %v\n", currentParentBinaryTreeNode)
-
-						if currentParentBinaryTreeNode.left == currentBinaryTreeNode {
-							currentParentBinaryTreeNode.left = toMove
-						} else if currentParentBinaryTreeNode.right == currentBinaryTreeNode {
-							currentParentBinaryTreeNode.right = toMove
+							binaryTree.root = toMove
+						} else {
+							if currentParentBinaryTreeNode.left == currentBinaryTreeNode {
+								currentParentBinaryTreeNode.left = toMove
+							} else if currentParentBinaryTreeNode.right == currentBinaryTreeNode {
+								currentParentBinaryTreeNode.right = toMove
+							}
 						}
 
 						binaryTree.count--

@@ -25,10 +25,10 @@ func (linkedListCircularBuffer *LinkedListCircularBuffer) Push(value int) bool {
 			//change the write to zero and push
 			linkedListCircularBuffer.write = 0
 		}
-		status, _ := linkedListCircularBuffer.internalLinkedList.GetNodeAtIndex(linkedListCircularBuffer.write)
+		status, _ := linkedListCircularBuffer.internalLinkedList.Get(linkedListCircularBuffer.write)
 		if status {
 			//node exists change the value of the node insert at index wont work for this
-			linkedListCircularBuffer.internalLinkedList.EditNodeAtIndex(value, linkedListCircularBuffer.write)
+			linkedListCircularBuffer.internalLinkedList.Set(linkedListCircularBuffer.write, value)
 		} else {
 			//Insert at end
 			linkedListCircularBuffer.internalLinkedList.AddLast(value)
@@ -57,7 +57,7 @@ func (linkedListCircularBuffer *LinkedListCircularBuffer) ReadNext() (bool, int)
 		linkedListCircularBuffer.size--
 		linkedListCircularBuffer.read++
 
-		return linkedListCircularBuffer.internalLinkedList.GetNodeAtIndex(linkedListCircularBuffer.read - 1)
+		return linkedListCircularBuffer.internalLinkedList.Get(linkedListCircularBuffer.read - 1)
 	}
 
 	return false, 0

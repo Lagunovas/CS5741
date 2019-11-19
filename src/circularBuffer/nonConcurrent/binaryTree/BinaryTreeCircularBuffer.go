@@ -67,6 +67,10 @@ func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) Clear() {
 	binaryTreeCircularBuffer.internalBinaryTree.Clear()
 }
 
+func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) ToString() string {
+	return binaryTreeCircularBuffer.internalBinaryTree.ToString()
+}
+
 func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) canWrite() bool {
 	return binaryTreeCircularBuffer.size < binaryTreeCircularBuffer.capacity
 }

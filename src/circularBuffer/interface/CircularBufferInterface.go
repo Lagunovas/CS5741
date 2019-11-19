@@ -5,6 +5,6 @@ type CircularBufferInterface interface {
 	HasNext() bool
 	ReadNext() (bool, int)
 	Capacity() int
-	//size
-	//clear
+	Size() int
+	Clear()
 }

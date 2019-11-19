@@ -1,8 +1,6 @@
 package linkedListCircularBuffer
 
 import (
-	"fmt"
-
 	linkedList "github.com/CS5741/src/shared/linkedList"
 )
 
@@ -19,29 +17,21 @@ func NewLinkedListCircularBuffer(capacity int) *LinkedListCircularBuffer {
 }
 
 func (linkedListCircularBuffer *LinkedListCircularBuffer) Push(value int) bool {
-	//size == capacity=> no space so no push possible
 	if linkedListCircularBuffer.size < linkedListCircularBuffer.capacity {
 		if linkedListCircularBuffer.write == linkedListCircularBuffer.capacity {
-			//change the write to zero and push
 			linkedListCircularBuffer.write = 0
 		}
-		status, _ := linkedListCircularBuffer.internalLinkedList.Get(linkedListCircularBuffer.write)
-		if status {
-			//node exists change the value of the node insert at index wont work for this
-			linkedListCircularBuffer.internalLinkedList.Set(linkedListCircularBuffer.write, value)
-		} else {
-			//Insert at end
+
+		if !linkedListCircularBuffer.internalLinkedList.Set(linkedListCircularBuffer.write, value) {
 			linkedListCircularBuffer.internalLinkedList.AddLast(value)
 		}
 
 		linkedListCircularBuffer.size++
 		linkedListCircularBuffer.write++
-		//fmt.Printf("added successfully %d \n" , buffer.write)
 		return true
-	} else {
-		fmt.Println("push not possible")
-		return false
 	}
+
+	return false
 }
 
 func (linkedListCircularBuffer *LinkedListCircularBuffer) HasNext() bool {

@@ -13,7 +13,7 @@ func NewArayCircularBuffer(capacity int) *ArrayCircularBuffer {
 }
 
 func (arrayCircularBuffer *ArrayCircularBuffer) Push(value int) bool {
-	if arrayCircularBuffer.CanWrite() {
+	if arrayCircularBuffer.canWrite() {
 		if arrayCircularBuffer.write == arrayCircularBuffer.capacity {
 			arrayCircularBuffer.write = 0
 		}
@@ -26,6 +26,10 @@ func (arrayCircularBuffer *ArrayCircularBuffer) Push(value int) bool {
 	}
 
 	return false
+}
+
+func (arrayCircularBuffer *ArrayCircularBuffer) HasNext() bool {
+	return arrayCircularBuffer.size > 0
 }
 
 func (arrayCircularBuffer *ArrayCircularBuffer) ReadNext() (bool, int) {
@@ -45,14 +49,6 @@ func (arrayCircularBuffer *ArrayCircularBuffer) ReadNext() (bool, int) {
 	return false, value
 }
 
-func (arrayCircularBuffer *ArrayCircularBuffer) HasNext() bool {
-	return arrayCircularBuffer.size > 0
-}
-
-func (arrayCircularBuffer *ArrayCircularBuffer) CanWrite() bool {
-	return arrayCircularBuffer.size < arrayCircularBuffer.capacity
-}
-
 func (arrayCircularBuffer *ArrayCircularBuffer) Capacity() int {
 	return arrayCircularBuffer.capacity
 }
@@ -66,4 +62,8 @@ func (arrayCircularBuffer *ArrayCircularBuffer) Clear() {
 	arrayCircularBuffer.write = 0
 	arrayCircularBuffer.read = 0
 	arrayCircularBuffer.data = []int{}
+}
+
+func (arrayCircularBuffer *ArrayCircularBuffer) canWrite() bool {
+	return arrayCircularBuffer.size < arrayCircularBuffer.capacity
 }

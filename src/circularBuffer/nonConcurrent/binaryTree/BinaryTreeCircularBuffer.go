@@ -5,25 +5,25 @@ import (
 )
 
 type BinaryTreeCircularBuffer struct {
-	bt       *binaryTree.BinaryTree
-	read     int
-	write    int
-	size     int
-	capacity int
+	internalBinaryTree *binaryTree.BinaryTree
+	read               int
+	write              int
+	size               int
+	capacity           int
 }
 
 func NewBinaryTreeCircularBuffer(capacity int) *BinaryTreeCircularBuffer {
-	return &BinaryTreeCircularBuffer{bt: binaryTree.NewBinaryTree(), capacity: capacity}
+	return &BinaryTreeCircularBuffer{internalBinaryTree: binaryTree.NewBinaryTree(), capacity: capacity}
 }
 
 func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) Push(value int) bool {
-	if binaryTreeCircularBuffer.CanWrite() {
+	if binaryTreeCircularBuffer.canWrite() {
 		if binaryTreeCircularBuffer.write == binaryTreeCircularBuffer.capacity {
 			binaryTreeCircularBuffer.write = 0
 		}
 
-		binaryTreeCircularBuffer.bt.Remove(binaryTreeCircularBuffer.write + 1)
-		binaryTreeCircularBuffer.bt.PushOrder(value, binaryTreeCircularBuffer.write+1)
+		binaryTreeCircularBuffer.internalBinaryTree.Remove(binaryTreeCircularBuffer.write + 1)
+		binaryTreeCircularBuffer.internalBinaryTree.PushOrder(value, binaryTreeCircularBuffer.write+1)
 
 		binaryTreeCircularBuffer.write++
 		binaryTreeCircularBuffer.size++
@@ -33,29 +33,23 @@ func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) Push(value int) bool {
 	return false
 }
 
-func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) ReadNext() (bool, int) {
-	var value int
+func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) HasNext() bool {
+	return binaryTreeCircularBuffer.size > 0
+}
 
+func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) ReadNext() (bool, int) {
 	if binaryTreeCircularBuffer.HasNext() {
 		if binaryTreeCircularBuffer.read == binaryTreeCircularBuffer.capacity {
 			binaryTreeCircularBuffer.read = 0
 		}
 
-		value = binaryTreeCircularBuffer.bt.NodeAt(binaryTreeCircularBuffer.read + 1).Value()
 		binaryTreeCircularBuffer.size--
 		binaryTreeCircularBuffer.read++
-		return true, value
+
+		return binaryTreeCircularBuffer.internalBinaryTree.ValueAt(binaryTreeCircularBuffer.read - 1)
 	}
 
-	return false, value
-}
-
-func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) HasNext() bool {
-	return binaryTreeCircularBuffer.size > 0
-}
-
-func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) CanWrite() bool {
-	return binaryTreeCircularBuffer.size < binaryTreeCircularBuffer.capacity
+	return false, 0
 }
 
 func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) Capacity() int {
@@ -70,5 +64,9 @@ func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) Clear() {
 	binaryTreeCircularBuffer.read = 0
 	binaryTreeCircularBuffer.write = 0
 	binaryTreeCircularBuffer.size = 0
-	binaryTreeCircularBuffer.bt.Clear()
+	binaryTreeCircularBuffer.internalBinaryTree.Clear()
+}
+
+func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) canWrite() bool {
+	return binaryTreeCircularBuffer.size < binaryTreeCircularBuffer.capacity
 }

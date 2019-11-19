@@ -204,7 +204,7 @@ func (binaryTree *BinaryTree) ToString() string {
 	return buffer.String()
 }
 
-func (binaryTree *BinaryTree) NodeAt(order int) *BinaryTreeNode {
+func (binaryTree *BinaryTree) ValueAt(order int) (bool, int) {
 	if !binaryTree.Empty() {
 		var queue []*BinaryTreeNode = []*BinaryTreeNode{binaryTree.root}
 
@@ -212,7 +212,7 @@ func (binaryTree *BinaryTree) NodeAt(order int) *BinaryTreeNode {
 			var node *BinaryTreeNode = queue[0]
 
 			if node.order == order {
-				return node
+				return true, node.value
 			} else {
 				if node.left != nil {
 					queue = append(queue, node.left)
@@ -227,9 +227,13 @@ func (binaryTree *BinaryTree) NodeAt(order int) *BinaryTreeNode {
 		}
 	}
 
-	return nil
+	return false, 0
 }
 
-func (binaryTree *BinaryTree) Tail() *BinaryTreeNode {
-	return binaryTree.NodeAt(binaryTree.count)
+func (binaryTree *BinaryTree) Tail() (bool, int) {
+	if !binaryTree.Empty() {
+		return binaryTree.ValueAt(binaryTree.count)
+	}
+
+	return false, 0
 }

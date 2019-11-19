@@ -14,26 +14,23 @@ func (arrayStack *ArrayStack) Push(value int) {
 	arrayStack.size++
 }
 
-func (arrayStack *ArrayStack) Pop() int {
-	var item int
-
+func (arrayStack *ArrayStack) Pop() (bool, int) {
 	if !arrayStack.Empty() {
-		item = arrayStack.items[arrayStack.size-1]
+		item := arrayStack.items[arrayStack.size-1]
 		arrayStack.items = arrayStack.items[0 : arrayStack.size-1]
 		arrayStack.size--
+		return true, item
 	}
 
-	return item
+	return false, 0
 }
 
-func (arrayStack *ArrayStack) Peek() int {
-	var item int
-
+func (arrayStack *ArrayStack) Peek() (bool, int) {
 	if !arrayStack.Empty() {
-		item = arrayStack.items[arrayStack.size-1]
+		return true, arrayStack.items[arrayStack.size-1]
 	}
 
-	return item
+	return false, 0
 }
 
 func (arrayStack *ArrayStack) Empty() bool {

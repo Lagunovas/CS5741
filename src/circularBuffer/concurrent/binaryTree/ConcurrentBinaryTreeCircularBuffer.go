@@ -40,8 +40,5 @@ func (concurrentBinaryTreeCircularBuffer *ConcurrentBinaryTreeCircularBuffer) Ca
 }
 
 func (concurrentBinaryTreeCircularBuffer *ConcurrentBinaryTreeCircularBuffer) ToString() string {
-	concurrentBinaryTreeCircularBuffer.mutex.Lock()
-	defer concurrentBinaryTreeCircularBuffer.mutex.Unlock()
-	// return concurrentLinkedListCircularBuffer.buffer.ToString()
-	return ""
+	return "NOT IMPLEMENTED"
 }

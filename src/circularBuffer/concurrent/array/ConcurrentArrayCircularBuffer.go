@@ -40,8 +40,5 @@ func (concurrentArrayCircularBuffer *ConcurrentArrayCircularBuffer) Capacity() i
 }
 
 func (concurrentArrayCircularBuffer *ConcurrentArrayCircularBuffer) ToString() string {
-	concurrentArrayCircularBuffer.mutex.Lock()
-	defer concurrentArrayCircularBuffer.mutex.Unlock()
-	// return concurrentLinkedListCircularBuffer.buffer.ToString()
-	return ""
+	return "NOT IMPLEMENTED"
 }

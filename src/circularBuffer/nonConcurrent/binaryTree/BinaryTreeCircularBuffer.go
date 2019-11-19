@@ -46,7 +46,7 @@ func (binaryTreeCircularBuffer *BinaryTreeCircularBuffer) ReadNext() (bool, int)
 		binaryTreeCircularBuffer.size--
 		binaryTreeCircularBuffer.read++
 
-		return binaryTreeCircularBuffer.internalBinaryTree.ValueAt(binaryTreeCircularBuffer.read - 1)
+		return binaryTreeCircularBuffer.internalBinaryTree.ValueAt(binaryTreeCircularBuffer.read)
 	}
 
 	return false, 0

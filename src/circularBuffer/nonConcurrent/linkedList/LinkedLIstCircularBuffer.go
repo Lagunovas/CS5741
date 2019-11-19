@@ -37,9 +37,6 @@ func (linkedListCircularBuffer *LinkedListCircularBuffer) Push(value int) bool {
 		linkedListCircularBuffer.size++
 		linkedListCircularBuffer.write++
 		//fmt.Printf("added successfully %d \n" , buffer.write)
-		fmt.Printf("size %d \n ", linkedListCircularBuffer.size)
-		fmt.Printf("write %d \n ", linkedListCircularBuffer.write)
-		fmt.Printf("read %d \n ", linkedListCircularBuffer.read)
 		return true
 	} else {
 		fmt.Println("push not possible")

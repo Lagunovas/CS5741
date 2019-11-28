@@ -1,8 +1,9 @@
-package avlNode
+package avlTree
 
 import (
-	"sync"
 	"sync/atomic"
+
+	recmutex "github.com/CS5741/src/misc"
 )
 
 type AVLNode struct {
@@ -12,11 +13,11 @@ type AVLNode struct {
 	Parent  *AVLNode
 	Left    *AVLNode
 	Right   *AVLNode
-	Mutex   sync.RWMutex
+	Mutex   recmutex.RecursiveMutex
 }
 
-func NewAVLNode() *AVLNode {
-	return &AVLNode{}
+func NewAVLNode(value int) *AVLNode {
+	return &AVLNode{height: new(int64), version: new(int32), Value: value}
 }
 
 func (avlNode *AVLNode) LoadHeight() int64 {
@@ -39,6 +40,11 @@ func (avlNode *AVLNode) Height() int64 {
 	if avlNode == nil {
 		return 0
 	}
+
+	// needs sync, reetrant locks???
+
+	// avlNode.Mutex.Lock()
+	// defer avlNode.Mutex.Unlock()
 
 	avlNode.StoreHeight(1 + Max(avlNode.Left.Height(), avlNode.Right.Height()))
 	return avlNode.LoadHeight()
@@ -64,9 +70,6 @@ func (avlNode *AVLNode) Child(direction int) *AVLNode { // -1, 1
 }
 
 func (avlNode *AVLNode) SetChild(direction int, child *AVLNode) {
-	avlNode.Mutex.Lock()
-	defer avlNode.Mutex.Unlock()
-
 	switch direction {
 	case -1:
 		avlNode.Left = child
@@ -75,7 +78,6 @@ func (avlNode *AVLNode) SetChild(direction int, child *AVLNode) {
 	}
 
 	child.Parent = avlNode
-	child.height = new(int64)
 }
 
 func (avlNode *AVLNode) CanUnlink() int {
@@ -86,4 +88,8 @@ func (avlNode *AVLNode) CanUnlink() int {
 		return 0
 	}
 	return 1
+}
+
+func (avlNode *AVLNode) Leaf() bool {
+	return avlNode.Left == nil && avlNode.Right == nil
 }

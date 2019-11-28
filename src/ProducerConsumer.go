@@ -11,15 +11,17 @@ package main
 
 import (
 	//"bytes"
-	"fmt"
-	//"math/rand"
-	//"strconv"
 	"bufio"
+	"fmt"
 	"os"
+	"runtime"
 	"time"
 
-	//linkedListCircularBuffer "github.com/CS5741/src/circularBuffer/nonConcurrent/linkedList"
-	arrayCircularBuffer "github.com/CS5741/src/circularBuffer/nonConcurrent/array"
+	//"math/rand"
+	//"strconv"
+
+	linkedListCircularBuffer "github.com/CS5741/src/circularBuffer/nonConcurrent/linkedList"
+	//arrayCircularBuffer "github.com/CS5741/src/circularBuffer/nonConcurrent/array"
 )
 
 //
@@ -38,48 +40,59 @@ func (numGen *NumberGenerator) GetNumber() int {
 }
 
 func main() {
+	start := time.Now()
+	runtime.GOMAXPROCS(1)
+	fmt.Println(runtime.GOMAXPROCS(0))
 	numGenerator := NewNumberGenerator()
-	buffer := arrayCircularBuffer.NewArayCircularBuffer(5)
+	buffer := linkedListCircularBuffer.NewLinkedListCircularBuffer(5)
+	//buffer := arrayCircularBuffer.NewArayCircularBuffer(5)
 	go Producer(buffer, numGenerator)
-	go Consumer(buffer)
+	go Consumer(start, buffer)
 
 	reader := bufio.NewReader(os.Stdin)
+
 	txt, _ := reader.ReadString('\n')
 	fmt.Println(txt)
 	fmt.Println("program complete")
 }
 
 /**/
-func Producer(buffer *arrayCircularBuffer.ArrayCircularBuffer, numGen *NumberGenerator) {
-	for i := 0; i < 20; i++ {
+func Producer(buffer *linkedListCircularBuffer.LinkedListCircularBuffer, numGen *NumberGenerator) {
+	for i := 0; i < 100; i++ {
 		num := numGen.GetNumber()
-		if buffer.Size() == buffer.Capacity() {
+
+		for buffer.Size() == buffer.Capacity() {
 			//sleep
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Millisecond)
+		}
+		val := buffer.Push(num)
+		if val {
+			fmt.Printf("Producer Produced %d \n", num)
+		} else {
+			fmt.Print("could not push number %d \n", num)
+			i--
 		}
 		//add number to the bufer
-		buffer.Push(num)
-		fmt.Printf("Pushed number %d \n", num)
 		if buffer.Size() == 1 {
 			// wake up the consumer
-
 		}
-
 	}
-
 }
 
 /**/
-func Consumer(buffer *arrayCircularBuffer.ArrayCircularBuffer) {
-	for i := 0; i < 20; i++ {
+func Consumer(startTime time.Time, buffer *linkedListCircularBuffer.LinkedListCircularBuffer) {
+	for i := 0; i < 100; i++ {
 		status, val := buffer.ReadNext()
 		if status {
 			fmt.Printf("consumer consumed %d \n", val)
 		} else {
-			time.Sleep(2 * time.Second)
-
+			time.Sleep(1 * time.Millisecond)
+			fmt.Println("consumer failed")
+			i--
 		}
-
+		if i == 99 {
+			elapsed := time.Since(startTime)
+			fmt.Printf("time taken %s", elapsed)
+		}
 	}
-
 }

@@ -10,155 +10,134 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"runtime"
+	"sync"
 	"time"
 
 	//=======> BUFFER
 	concurrentArrayCircularBuffer "github.com/CS5741/src/circularBuffer/concurrent/array"
 	circularBufferInterface "github.com/CS5741/src/circularBuffer/interface"
+
 	//concurrentBinaryTreeCircularBuffer "github.com/CS5741/src/circularBuffer/concurrent/binaryTree"
-	//concurrentLinkedListCircularBuffer "github.com/CS5741/src/circularBuffer/concurrent/linkedList"
 
 	//=========> Stack
-	concurrentArrayStack "github.com/CS5741/src/stack/concurrent/array"
+	// concurrentArrayStack "github.com/CS5741/src/stack/concurrent/array"
 	//concurrentBinaryTreeStack "github.com/CS5741/src/stack/concurrent/binaryTree"
 	//concurrentLinkedListStack "github.com/CS5741/src/stack/concurrent/linkedList"
 	stackInterface "github.com/CS5741/src/stack/interface"
 )
 
-const STACK = 1
-const BUFFER = 2
-
-//
-type NumberGenerator struct {
-	number int
-}
-
-type Producer struct {
-	id                 int
-	productionCapacity int
-}
-type Consumer struct {
-	id                  int
-	consumptionCapacity int
-}
-
-//
-func NewNumberGenerator() *NumberGenerator {
-	return &NumberGenerator{number: 0}
-}
-
-func (numGen *NumberGenerator) GetNumber() int {
-	numGen.number++
-	return numGen.number
+type RequesteeInterface interface {
+	Request() (bool, int)
 }
 
 func main() {
+	//runtime.GOMAXPROCS(1)
+	var waitGroup sync.WaitGroup
+	var numberOfProducers int
+	var numberOfConsumers int
+	var consumptionCapacity int
+	var productionCapacity int
 
-	runtime.GOMAXPROCS(1)
+	fmt.Println("Please Enter the numberOfProducers : ")
+	fmt.Scanln(&numberOfProducers)
+	fmt.Println("Please Enter the numberOfConsumers : ")
+	fmt.Scanln(&numberOfConsumers)
+	fmt.Println("Please Enter the consumptionCapacity : ")
+	fmt.Scanln(&consumptionCapacity)
+	fmt.Println("Please Enter the productionCapacity : ")
+	fmt.Scanln(&productionCapacity)
+
+	// var arrayStack stackInterface.StackInterface = concurrentArrayStack.NewConcurrentArrayStack()
+	// var binaryTreeStack stackInterface.StackInterface = concurrentBinaryTreeStack.NewConcurrentBinaryTreeStack()
+	// var linkedListStack stackInterface.StackInterface = concurrentLinkedListStack.NewConcurrentLinkedListStack()
+
+	var arrayBuffer circularBufferInterface.CircularBufferInterface = concurrentArrayCircularBuffer.NewConcurrentArrayCircularBuffer(5)
+	// var binaryTreeBuffer circularBufferInterface.CircularBufferInterface = concurrentBinaryTreeCircularBuffer.NewConcurrentBinaryTreeCircularBuffer(5)
+	//var linkedListBuffer circularBufferInterface.CircularBufferInterface = concurrentLinkedListCircularBuffer.NewConcurrentCircularBuffer(5)
 	//fmt.Println(runtime.GOMAXPROCS(0))
-	ProductionAndConsumption(2, 2, 100, 1, 100)
 
-	reader := bufio.NewReader(os.Stdin)
+	startTime := time.Now()
 
-	txt, _ := reader.ReadString('\n')
-	fmt.Println(txt)
-	fmt.Println("program complete")
+	for i := 0; i < 1; i++ {
+		ProductionAndConsumption(numberOfProducers, numberOfConsumers, productionCapacity, consumptionCapacity, &waitGroup, arrayBuffer)
+		waitGroup.Wait()
+	}
+
+	elapsedTime := time.Since(startTime)
+	fmt.Printf("time taken %s \n", elapsedTime)
 }
 
-/**/
+func ProductionAndConsumption(numberOfProducers, numberOfConsumers, productionCapacityOfProducers, consumptionCapacityOfConsumer int, waitGroup *sync.WaitGroup, datastructure interface{}) {
+	requestee := datastructure.(RequesteeInterface)
 
-/**/
-
-func ProductionAndConsumption(numberOfProducers, numberOfConsumers, productionCapacityOfProducers, typeOfProduction, consumptionCapacityOfConsumer int) {
-
-	start := time.Now()
-	if typeOfProduction == STACK {
-		var stack stackInterface.StackInterface = concurrentArrayStack.NewConcurrentArrayStack()
-		//	var stack stackInterface.StackInterface = concurrentBinaryTreeStack.NewConcurrentBinaryTreeStack()
-		//var stack stackInterface.StackInterface = concurrentLinkedListStack.NewConcurrentLinkedListStack()
+	if stack, ok := datastructure.(stackInterface.StackInterface); ok {
 		for i := 0; i < numberOfProducers; i++ {
-			numGenerator := NewNumberGenerator()
-			go StackProduction(stack, numGenerator, productionCapacityOfProducers)
+			go StackProduction(i, stack, productionCapacityOfProducers)
 		}
+
 		for i := 0; i < numberOfConsumers; i++ {
-			go StackConsumption(start, stack, consumptionCapacityOfConsumer)
+			waitGroup.Add(1)
+			go Consumer(requestee, consumptionCapacityOfConsumer, waitGroup)
 		}
-	} else {
-		var buffer circularBufferInterface.CircularBufferInterface = concurrentArrayCircularBuffer.NewConcurrentArrayCircularBuffer(5)
-		// var buffer circularBufferInterface.CircularBufferInterface = concurrentBinaryTreeCircularBuffer.NewConcurrentBinaryTreeCircularBuffer(5)
-		//var buffer circularBufferInterface.CircularBufferInterface = concurrentLinkedListCircularBuffer.NewConcurrentCircularBuffer(5)
+
+	} else { //==========>BUFFER<================
+		buffer, _ := datastructure.(circularBufferInterface.CircularBufferInterface)
+
 		for i := 0; i < numberOfProducers; i++ {
-			numGenerator := NewNumberGenerator()
-			go CircularBufferProduction(buffer, numGenerator, productionCapacityOfProducers)
+			go CircularBufferProduction(i, buffer, productionCapacityOfProducers)
 		}
+
 		for i := 0; i < numberOfConsumers; i++ {
-			go CircularBufferConsumption(start, buffer, consumptionCapacityOfConsumer)
+			waitGroup.Add(1)
+			go Consumer(requestee, consumptionCapacityOfConsumer, waitGroup)
 		}
+
 	}
 
 }
 
-func StackProduction(stack stackInterface.StackInterface, numGen *NumberGenerator, productionCapacityOfProducers int) {
-	for i := 0; i < productionCapacityOfProducers; i++ {
-		num := numGen.GetNumber()
+func StackProduction(id int, stack stackInterface.StackInterface, productionCapacityOfProducers int) {
+	for i := 1; i <= productionCapacityOfProducers; i++ {
+		num := (productionCapacityOfProducers * id) + i
+
 		stack.Push(num)
 		fmt.Printf("Producer Produced %d \n", num)
+
 		//sleep
 		time.Sleep(1 * time.Millisecond)
 	}
 }
 
-func CircularBufferProduction(buffer circularBufferInterface.CircularBufferInterface, numGen *NumberGenerator, productionCapacityOfProducers int) {
-	for i := 0; i < productionCapacityOfProducers; i++ {
-		num := numGen.GetNumber()
+func CircularBufferProduction(id int, buffer circularBufferInterface.CircularBufferInterface, productionCapacityOfProducers int) {
+	for i := 1; i <= productionCapacityOfProducers; {
+		num := (productionCapacityOfProducers * id) + i
+
 		for buffer.Size() == buffer.Capacity() {
-			//sleep
 			time.Sleep(1 * time.Millisecond)
 		}
+
 		val := buffer.Push(num)
+
 		if val {
-			fmt.Printf("Producer Produced %d \n", num)
-		} else {
-			fmt.Printf("could not push number %d \n", num)
-			i--
+			// fmt.Printf("Producer Produced %d \n", num)
+			i++
 		}
 	}
+
 }
 
-func StackConsumption(startTime time.Time, stack stackInterface.StackInterface, consumptionCapacityOfConsumer int) {
-	for i := 0; i < consumptionCapacityOfConsumer; i++ {
-		status, val := stack.Pop()
+func Consumer(requestee RequesteeInterface, consumptionCapacityOfConsumer int, waitGroup *sync.WaitGroup) {
+	for i := 0; i < consumptionCapacityOfConsumer; {
+		status, _ := requestee.Request()
 		if status {
-			fmt.Printf("consumer consumed %d \n", val)
+			//fmt.Printf("Consumer Consumed %d \n", val)
+			i++
 		} else {
 			time.Sleep(1 * time.Millisecond)
-			fmt.Println("consumer failed")
-			i--
+			// fmt.Printf("FAIL - count: %v\n", i)
 		}
-		if i == consumptionCapacityOfConsumer-1 {
-			elapsed := time.Since(startTime)
-			fmt.Printf("time taken %s", elapsed)
-		}
+	}
 
-	}
-}
-func CircularBufferConsumption(startTime time.Time, buffer circularBufferInterface.CircularBufferInterface, consumptionCapacityOfConsumer int) {
-	for i := 0; i < consumptionCapacityOfConsumer; i++ {
-		status, val := buffer.ReadNext()
-		if status {
-			fmt.Printf("consumer consumed %d \n", val)
-		} else {
-			time.Sleep(1 * time.Millisecond)
-			fmt.Println("consumer failed")
-			i--
-		}
-		if i == consumptionCapacityOfConsumer-1 {
-			elapsed := time.Since(startTime)
-			fmt.Printf("time taken %s", elapsed)
-		}
-	}
+	waitGroup.Done()
 }

@@ -51,4 +51,8 @@ func (concurrentLinkedListCircularBuffer *ConcurrentLinkedListCircularBuffer) Si
 
 func (concurrentLinkedListCircularBuffer *ConcurrentLinkedListCircularBuffer) Clear() {
 	concurrentLinkedListCircularBuffer.internalBuffer.Clear()
-} 
+}
+
+func (concurrentLinkedListCircularBuffer *ConcurrentLinkedListCircularBuffer) Request() (bool, int) {
+	return concurrentLinkedListCircularBuffer.ReadNext()
+}

@@ -50,3 +50,7 @@ func (concurrentLinkedListStack *ConcurrentLinkedListStack) Clear() {
 	defer concurrentLinkedListStack.mutex.Unlock()
 	concurrentLinkedListStack.internalStack.Clear()
 }
+
+func (concurrentLinkedListStack *ConcurrentLinkedListStack) Request() (bool, int) {
+	return concurrentLinkedListStack.Pop()
+}

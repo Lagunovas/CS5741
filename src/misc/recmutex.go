@@ -15,7 +15,7 @@ type RecursiveMutex struct {
 }
 
 func (rm *RecursiveMutex) Lock() {
-	goRoutineID := gls.GoID() //goroutine.GoroutineId()
+	goRoutineID := gls.GoID()
 
 	for {
 		rm.internalMutex.Lock()

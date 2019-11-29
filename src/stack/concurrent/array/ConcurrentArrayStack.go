@@ -50,3 +50,7 @@ func (concurrentArrayStack *ConcurrentArrayStack) Clear() {
 	defer concurrentArrayStack.mutex.Unlock()
 	concurrentArrayStack.internalStack.Clear()
 }
+
+func (concurrentArrayStack *ConcurrentArrayStack) Request() (bool, int) {
+	return concurrentArrayStack.Pop()
+}

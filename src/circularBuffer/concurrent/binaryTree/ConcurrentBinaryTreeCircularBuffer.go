@@ -50,3 +50,7 @@ func (concurrentBinaryTreeCircularBuffer *ConcurrentBinaryTreeCircularBuffer) Si
 func (concurrentBinaryTreeCircularBuffer *ConcurrentBinaryTreeCircularBuffer) Clear() {
 	concurrentBinaryTreeCircularBuffer.internalBuffer.Clear()
 }
+
+func (concurrentBinaryTreeCircularBuffer *ConcurrentBinaryTreeCircularBuffer) Request() (bool, int) {
+	return concurrentBinaryTreeCircularBuffer.ReadNext()
+}

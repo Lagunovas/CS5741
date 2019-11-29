@@ -50,3 +50,7 @@ func (concurrentArrayCircularBuffer *ConcurrentArrayCircularBuffer) Size() int {
 func (concurrentArrayCircularBuffer *ConcurrentArrayCircularBuffer) Clear() {
 	concurrentArrayCircularBuffer.internalBuffer.Clear()
 }
+
+func (concurrentArrayCircularBuffer *ConcurrentArrayCircularBuffer) Request() (bool, int) {
+	return concurrentArrayCircularBuffer.ReadNext()
+}

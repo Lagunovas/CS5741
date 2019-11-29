@@ -50,3 +50,7 @@ func (concurrentBinaryTreeStack *ConcurrentBinaryTreeStack) Clear() {
 	defer concurrentBinaryTreeStack.mutex.Unlock()
 	concurrentBinaryTreeStack.internalStack.Clear()
 }
+
+func (concurrentBinaryTreeStack *ConcurrentBinaryTreeStack) Request() (bool, int) {
+	return concurrentBinaryTreeStack.Pop()
+}

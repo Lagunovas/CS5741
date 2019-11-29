@@ -174,7 +174,6 @@ func (binaryTree *BinaryTree) Remove(order int) (bool, int) {
 			stackSize = len(stack)
 		}
 	}
-
 	return false, 0
 }
 

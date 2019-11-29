@@ -44,3 +44,11 @@ func (concurrentLinkedListCircularBuffer *ConcurrentLinkedListCircularBuffer) To
 	defer concurrentLinkedListCircularBuffer.mutex.Unlock()
 	return concurrentLinkedListCircularBuffer.internalBuffer.ToString()
 }
+
+func (concurrentLinkedListCircularBuffer *ConcurrentLinkedListCircularBuffer) Size() int {
+	return concurrentLinkedListCircularBuffer.internalBuffer.Size()
+}
+
+func (concurrentLinkedListCircularBuffer *ConcurrentLinkedListCircularBuffer) Clear() {
+	concurrentLinkedListCircularBuffer.internalBuffer.Clear()
+} 

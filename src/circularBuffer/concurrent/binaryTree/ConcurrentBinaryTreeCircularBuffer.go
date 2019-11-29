@@ -42,3 +42,11 @@ func (concurrentBinaryTreeCircularBuffer *ConcurrentBinaryTreeCircularBuffer) Ca
 func (concurrentBinaryTreeCircularBuffer *ConcurrentBinaryTreeCircularBuffer) ToString() string {
 	return "NOT IMPLEMENTED"
 }
+
+func (concurrentBinaryTreeCircularBuffer *ConcurrentBinaryTreeCircularBuffer) Size() int {
+	return concurrentBinaryTreeCircularBuffer.internalBuffer.Size()
+}
+
+func (concurrentBinaryTreeCircularBuffer *ConcurrentBinaryTreeCircularBuffer) Clear() {
+	concurrentBinaryTreeCircularBuffer.internalBuffer.Clear()
+}

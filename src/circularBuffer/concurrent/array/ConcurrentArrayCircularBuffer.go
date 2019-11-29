@@ -42,3 +42,11 @@ func (concurrentArrayCircularBuffer *ConcurrentArrayCircularBuffer) Capacity() i
 func (concurrentArrayCircularBuffer *ConcurrentArrayCircularBuffer) ToString() string {
 	return "NOT IMPLEMENTED"
 }
+
+func (concurrentArrayCircularBuffer *ConcurrentArrayCircularBuffer) Size() int {
+	return concurrentArrayCircularBuffer.internalBuffer.Size()
+}
+
+func (concurrentArrayCircularBuffer *ConcurrentArrayCircularBuffer) Clear() {
+	concurrentArrayCircularBuffer.internalBuffer.Clear()
+}

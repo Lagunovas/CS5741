@@ -22,12 +22,10 @@ func NewAVLNode(value int) *AVLNode {
 
 func (avlNode *AVLNode) LoadHeight() int64 {
 	return atomic.LoadInt64(avlNode.height)
-	// return *avlNode.height
 }
 
 func (avlNode *AVLNode) StoreHeight(value int64) {
 	atomic.StoreInt64(avlNode.height, value)
-	// *avlNode.height = value
 }
 
 func Max(x, y int64) int64 {
@@ -43,8 +41,6 @@ func (avlNode *AVLNode) Height() int64 {
 		return 0
 	}
 
-	// needs sync, reetrant locks???
-
 	avlNode.Mutex.Lock()
 	defer avlNode.Mutex.Unlock()
 
@@ -54,12 +50,10 @@ func (avlNode *AVLNode) Height() int64 {
 
 func (avlNode *AVLNode) LoadVersion() int32 {
 	return atomic.LoadInt32(avlNode.version)
-	// return *avlNode.version
 }
 
 func (avlNode *AVLNode) StoreVersion(value int32) {
 	atomic.StoreInt32(avlNode.version, value)
-	// *avlNode.version = value
 }
 
 func (avlNode *AVLNode) Child(direction int) *AVLNode { // -1, 1
@@ -74,12 +68,6 @@ func (avlNode *AVLNode) Child(direction int) *AVLNode { // -1, 1
 }
 
 func (avlNode *AVLNode) SetChild(direction int, child *AVLNode) {
-	avlNode.Mutex.Lock()
-	defer avlNode.Mutex.Unlock()
-
-	child.Mutex.Lock()
-	defer child.Mutex.Unlock()
-
 	switch direction {
 	case -1:
 		avlNode.Left = child
@@ -92,14 +80,6 @@ func (avlNode *AVLNode) SetChild(direction int, child *AVLNode) {
 
 func (avlNode *AVLNode) CanUnlink() bool {
 	return avlNode.Left == nil || avlNode.Right == nil
-	// return avlNode == nil || avlNode.Left == nil || avlNode.Right == nil
-	// if avlNode != nil {
-	// 	if avlNode.Right == nil || avlNode.Left == nil {
-	// 		return 1
-	// 	}
-	// 	return 0
-	// }
-	// return 1
 }
 
 func (avlNode *AVLNode) Leaf() bool {

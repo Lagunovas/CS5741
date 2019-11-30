@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	// avlTest "github.com/CS5741/src"
 	concurrentArrayCircularBuffer "github.com/CS5741/src/circularBuffer/concurrent/array"
 	concurrentLinkedListCircularBuffer "github.com/CS5741/src/circularBuffer/concurrent/linkedList"
 	circularBufferInterface "github.com/CS5741/src/circularBuffer/interface"
@@ -22,113 +23,121 @@ type RequesteeInterface interface {
 const BUFFER_SIZE int = 10
 
 func main() {
-	var waitGroup sync.WaitGroup
-	var numberOfProducers int
-	var numberOfConsumers int
-	var consumptionCapacity int
-	var productionCapacity int
+	var test int
 
-	fmt.Println("Please Enter the numberOfProducers : ")
-	fmt.Scanln(&numberOfProducers)
-	fmt.Println("Please Enter the numberOfConsumers : ")
-	fmt.Scanln(&numberOfConsumers)
-	fmt.Println("Please Enter the consumptionCapacity : ")
-	fmt.Scanln(&consumptionCapacity)
-	fmt.Println("Please Enter the productionCapacity : ")
-	fmt.Scanln(&productionCapacity)
+	fmt.Println("Enter 1 for AVL Test, 2 otherwise:")
+	fmt.Scanln(&test)
 
-	var dataStructure interface{}
+	if test == 1 {
+		Run()
+	} else {
+		var waitGroup sync.WaitGroup
+		var numberOfProducers int
+		var numberOfConsumers int
+		var consumptionCapacity int
+		var productionCapacity int
 
-	var results []time.Duration
+		fmt.Println("Please Enter the numberOfProducers : ")
+		fmt.Scanln(&numberOfProducers)
+		fmt.Println("Please Enter the numberOfConsumers : ")
+		fmt.Scanln(&numberOfConsumers)
+		fmt.Println("Please Enter the consumptionCapacity : ")
+		fmt.Scanln(&consumptionCapacity)
+		fmt.Println("Please Enter the productionCapacity : ")
+		fmt.Scanln(&productionCapacity)
 
-	var startTime time.Time
+		var dataStructure interface{}
 
-	var nonParallelResults []time.Duration
-	var parallelResults []time.Duration
+		var results []time.Duration
 
-	var resultsLocation *[]time.Duration
+		var startTime time.Time
 
-	for mode := 0; mode < 2; mode++ {
-		switch mode {
-		case 0:
-			runtime.GOMAXPROCS(1)
-			fmt.Println("Non-Parallel")
-			resultsLocation = &nonParallelResults
-		case 1:
-			runtime.GOMAXPROCS(runtime.NumCPU())
-			fmt.Printf("Parallel - THREAD COUNT: %v\n", runtime.GOMAXPROCS(0))
-			resultsLocation = &parallelResults
-		}
+		var nonParallelResults []time.Duration
+		var parallelResults []time.Duration
 
-		for i := 2; i < 5; i++ {
-			switch i {
+		var resultsLocation *[]time.Duration
+
+		for mode := 0; mode < 2; mode++ {
+			switch mode {
 			case 0:
-				fmt.Println("===== Array Circular Buffer =====")
-				dataStructure = concurrentArrayCircularBuffer.NewConcurrentArrayCircularBuffer(BUFFER_SIZE)
+				runtime.GOMAXPROCS(1)
+				fmt.Println("Non-Parallel")
+				resultsLocation = &nonParallelResults
 			case 1:
-				fmt.Println("===== Linked List Circular Buffer =====")
-				dataStructure = concurrentLinkedListCircularBuffer.NewConcurrentCircularBuffer(BUFFER_SIZE)
-			case 2:
-				fmt.Println("===== Array Stack =====")
-				dataStructure = concurrentArrayStack.NewConcurrentArrayStack()
-			case 3:
-				fmt.Println("===== Binary Tree Stack =====")
-				dataStructure = concurrentBinaryTreeStack.NewConcurrentBinaryTreeStack()
-			case 4:
-				fmt.Println("===== Linked List Stack =====")
-				dataStructure = concurrentLinkedListStack.NewConcurrentLinkedListStack()
+				runtime.GOMAXPROCS(runtime.NumCPU())
+				fmt.Printf("Parallel - THREAD COUNT: %v\n", runtime.GOMAXPROCS(0))
+				resultsLocation = &parallelResults
 			}
 
-			for j := 0; j < 10; j++ {
-				startTime = time.Now()
-				ProductionAndConsumption(numberOfProducers, numberOfConsumers, productionCapacity, consumptionCapacity, &waitGroup, &dataStructure)
-				waitGroup.Wait()
-				elapsedTime := time.Since(startTime)
-				results = append(results, elapsedTime)
-				fmt.Printf("time taken %v \n", results[len(results)-1])
-			}
-
-			resultCount := len(results)
-
-			var total time.Duration
-			duration, _ := time.ParseDuration("1h")
-			var best time.Duration = duration
-			duration, _ = time.ParseDuration("0ns")
-			var worst time.Duration = duration
-
-			for i := 0; i < resultCount; i++ {
-				currentDuration := results[i]
-
-				total += currentDuration
-
-				if currentDuration < best {
-					best = currentDuration
+			for i := 2; i < 5; i++ {
+				switch i {
+				case 0:
+					fmt.Println("===== Array Circular Buffer =====")
+					dataStructure = concurrentArrayCircularBuffer.NewConcurrentArrayCircularBuffer(BUFFER_SIZE)
+				case 1:
+					fmt.Println("===== Linked List Circular Buffer =====")
+					dataStructure = concurrentLinkedListCircularBuffer.NewConcurrentCircularBuffer(BUFFER_SIZE)
+				case 2:
+					fmt.Println("===== Array Stack =====")
+					dataStructure = concurrentArrayStack.NewConcurrentArrayStack()
+				case 3:
+					fmt.Println("===== Binary Tree Stack =====")
+					dataStructure = concurrentBinaryTreeStack.NewConcurrentBinaryTreeStack()
+				case 4:
+					fmt.Println("===== Linked List Stack =====")
+					dataStructure = concurrentLinkedListStack.NewConcurrentLinkedListStack()
 				}
 
-				if currentDuration > worst {
-					worst = currentDuration
+				for j := 0; j < 10; j++ {
+					startTime = time.Now()
+					ProductionAndConsumption(numberOfProducers, numberOfConsumers, productionCapacity, consumptionCapacity, &waitGroup, &dataStructure)
+					waitGroup.Wait()
+					elapsedTime := time.Since(startTime)
+					results = append(results, elapsedTime)
+					fmt.Printf("Time taken %v \n", results[len(results)-1])
 				}
+
+				resultCount := len(results)
+
+				var total time.Duration
+				duration, _ := time.ParseDuration("1h")
+				var best time.Duration = duration
+				duration, _ = time.ParseDuration("0ns")
+				var worst time.Duration = duration
+
+				for i := 0; i < resultCount; i++ {
+					currentDuration := results[i]
+
+					total += currentDuration
+
+					if currentDuration < best {
+						best = currentDuration
+					}
+
+					if currentDuration > worst {
+						worst = currentDuration
+					}
+				}
+
+				results = nil
+
+				*resultsLocation = append(*resultsLocation, worst)
+				*resultsLocation = append(*resultsLocation, best)
+				*resultsLocation = append(*resultsLocation, total)
+
+				fmt.Printf("Test results - worst: %v, best: %v, average: %vns, total: %v\n", worst, best.Nanoseconds(), total.Nanoseconds()/(int64)(resultCount), total)
 			}
+		}
 
-			results = nil
+		resultCount := len(nonParallelResults)
 
-			*resultsLocation = append(*resultsLocation, worst)
-			*resultsLocation = append(*resultsLocation, best)
-			*resultsLocation = append(*resultsLocation, total)
+		for i := 0; i < resultCount; i++ {
+			nPC := nonParallelResults[i]
+			pC := parallelResults[i]
 
-			fmt.Printf("Test results - worst: %v, best: %v, average: %vns, total: %v\n", worst, best.Nanoseconds(), total.Nanoseconds()/(int64)(resultCount), total)
+			fmt.Printf("Difference: %v\n", Difference(nPC.Nanoseconds(), pC.Nanoseconds()))
 		}
 	}
-
-	resultCount := len(nonParallelResults)
-
-	for i := 0; i < resultCount; i++ {
-		nPC := nonParallelResults[i]
-		pC := parallelResults[i]
-
-		fmt.Printf("Difference: %v\n", Difference(nPC.Nanoseconds(), pC.Nanoseconds()))
-	}
-
 }
 
 const hundred float64 = 100

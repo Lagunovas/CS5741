@@ -17,6 +17,7 @@ const RETRY = 0
 const SUCCESS = 1
 const NIL = -1
 const EXISTING_VALUE = -2
+const NOT_FOUND = -3
 
 // UTILS START
 
@@ -59,12 +60,14 @@ func attemptGet(value int, avlNode *AVLNode, direction int, nodeVersion int32) (
 		}
 
 		if child == nil {
+			fmt.Println("Value not found")
 			return NIL, 0
 		}
 
 		nextDirection := Compare(value, child.Value)
 
 		if nextDirection == 0 {
+			fmt.Println("Value found")
 			return SUCCESS, value
 		}
 
@@ -74,9 +77,11 @@ func attemptGet(value int, avlNode *AVLNode, direction int, nodeVersion int32) (
 			if ((avlNode.LoadVersion() ^ nodeVersion) & IgnoreGrow) != 0 {
 				return RETRY, 0
 			} else {
+				fmt.Printf("recursion - next direction: %v\n", nextDirection)
 				status, value := attemptGet(value, child, nextDirection, childVersion)
 
 				if status != RETRY {
+					fmt.Println("Not retrying, return result")
 					return status, value
 				}
 			}
@@ -90,33 +95,30 @@ func (avlTree *AVLTree) Get(value int) int {
 	return value
 }
 
-var SpinCount int = 100
-
 func (avlTree *AVLTree) attemptPut(value int, avlNode *AVLNode, direction int, nodeVersion int32) (int, int) {
 	p := 0 // -1 null, 0 retry, 1 found, value
-	returnValue := 0
+	returnValue := value
 
 	for {
 		child := avlNode.Child(direction)
 
 		if child != nil {
 			if ((avlNode.LoadVersion() ^ nodeVersion) & IgnoreGrow) != 0 {
-				fmt.Println("attempt put retry")
-				return RETRY, 0
+				return RETRY, returnValue
 			}
 
 			nextDirection := Compare(value, child.Value)
 
 			if nextDirection == 0 {
-				fmt.Println("attemptPut: existing value")
-				return EXISTING_VALUE, 0
+				fmt.Println("attemptPut: value exists")
+				return EXISTING_VALUE, returnValue
 			} else {
 				childVersion := child.LoadVersion()
 
 				if childVersion != Unlinked && child == avlNode.Child(direction) {
 					if ((avlNode.LoadVersion() ^ nodeVersion) & IgnoreGrow) != 0 {
 						fmt.Println("retry 2")
-						return RETRY, 0
+						return RETRY, returnValue
 					}
 					p, returnValue = avlTree.attemptPut(value, child, nextDirection, childVersion)
 				}
@@ -226,9 +228,7 @@ func (avlTree *AVLTree) attemptInsert(value int, avlNode *AVLNode, direction int
 		return RETRY
 	} else {
 		newChild := NewAVLNode(value)
-		// newChild.Mutex.Lock()
 		avlNode.SetChild(direction, newChild)
-		// newChild.Mutex.Unlock()
 		avlNode.Mutex.Unlock()
 	}
 
@@ -340,13 +340,13 @@ func (avlTree *AVLTree) UnlinkNode(node *AVLNode) {
 }
 
 func (avlTree *AVLTree) attemptRemoveNode(par *AVLNode, n *AVLNode) (int, int) {
-	if n.Value == -1 { // should be value???
+	if n.Value == -1 {
 		return NIL, -1
 	}
 
 	var prev int
 
-	if !n.CanUnlink() { //== 0 {
+	if !n.CanUnlink() {
 		n.Mutex.Lock()
 
 		if n.LoadVersion() == Unlinked || n.CanUnlink() {
@@ -400,30 +400,10 @@ func (avlTree *AVLTree) attemptRemoveNode(par *AVLNode, n *AVLNode) (int, int) {
 	return SUCCESS, prev
 }
 
-func WaitUntilNotChanging(avlNode *AVLNode) {
-	version := avlNode.LoadVersion()
-
-	if (version & (Growing | Shrinking)) != 0 {
-		i := 0
-
-		for avlNode.LoadVersion() == version && i < SpinCount {
-			i++
-		}
-
-		if i == SpinCount {
-			// synchronized (n) {}
-			avlNode.Mutex.Lock()
-			avlNode.Mutex.Unlock()
-		}
-
-	}
-}
-
 func (avlTree *AVLTree) attemptRemove(value int, node *AVLNode, direction int, nodeVersion int32) int {
 	p := RETRY
 
 	for {
-		// fmt.Printf("direction: %v\n", direction)
 		child := node.Child(direction)
 
 		if ((node.LoadVersion() ^ nodeVersion) & IgnoreGrow) != 0 {
@@ -431,11 +411,12 @@ func (avlTree *AVLTree) attemptRemove(value int, node *AVLNode, direction int, n
 		}
 
 		if child == nil {
-			return NIL
+			return NOT_FOUND
 		} else {
 			nextDirection := Compare(value, child.Value)
 
 			if nextDirection == 0 {
+				fmt.Println("attemptRemove: found node, try to remove")
 				_, p = avlTree.attemptRemoveNode(node, child)
 			} else {
 				childVersion := child.LoadVersion()

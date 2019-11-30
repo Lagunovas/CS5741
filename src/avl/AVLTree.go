@@ -101,7 +101,7 @@ func (avlTree *AVLTree) attemptPut(value int, avlNode *AVLNode, direction int, n
 
 		if child != nil {
 			if ((avlNode.LoadVersion() ^ nodeVersion) & IgnoreGrow) != 0 {
-				fmt.Println("retry")
+				fmt.Println("attempt put retry")
 				return RETRY, 0
 			}
 
@@ -160,6 +160,7 @@ func NodeStatus(n *AVLNode) int64 {
 	if n == nil {
 		return NOCHANGE
 	}
+
 	if (n.Left == nil || n.Right == nil) && n.Value == -1 {
 		return UNLINK
 	}
@@ -224,7 +225,10 @@ func (avlTree *AVLTree) attemptInsert(value int, avlNode *AVLNode, direction int
 		avlNode.Mutex.Unlock()
 		return RETRY
 	} else {
-		avlNode.SetChild(direction, NewAVLNode(value))
+		newChild := NewAVLNode(value)
+		// newChild.Mutex.Lock()
+		avlNode.SetChild(direction, newChild)
+		// newChild.Mutex.Unlock()
 		avlNode.Mutex.Unlock()
 	}
 
@@ -238,15 +242,18 @@ func RotateRight(n *AVLNode) {
 	nL := n.Left
 	nLR := nL.Right
 
-	n.Mutex.Lock()
-	defer n.Mutex.Unlock()
 	nP.Mutex.Lock()
 	defer nP.Mutex.Unlock()
+	n.Mutex.Lock()
+	defer n.Mutex.Unlock()
 	nL.Mutex.Lock()
 	defer nL.Mutex.Unlock()
 
-	n.StoreVersion(n.LoadVersion() | Shrinking)
-	nL.StoreVersion(nL.LoadVersion() | Growing)
+	nV := n.LoadVersion()
+	nLV := nL.LoadVersion()
+
+	n.StoreVersion(nV | Shrinking)
+	nL.StoreVersion(nLV | Growing)
 
 	n.Left = nLR
 	nL.Right = n
@@ -264,7 +271,7 @@ func RotateRight(n *AVLNode) {
 		nLR.Parent = n
 	}
 
-	height := 1 + Max(nLR.Height(), n.Height())
+	height := 1 + Max(nLR.Height(), n.Right.Height())
 	n.StoreHeight(height)
 	nL.StoreHeight(1 + Max(nL.Left.Height(), height))
 
@@ -339,7 +346,7 @@ func (avlTree *AVLTree) attemptRemoveNode(par *AVLNode, n *AVLNode) (int, int) {
 
 	var prev int
 
-	if n.CanUnlink() { //== 0 {
+	if !n.CanUnlink() { //== 0 {
 		n.Mutex.Lock()
 
 		if n.LoadVersion() == Unlinked || n.CanUnlink() {
@@ -348,6 +355,7 @@ func (avlTree *AVLTree) attemptRemoveNode(par *AVLNode, n *AVLNode) (int, int) {
 		}
 		prev = n.Value
 		n.Value = -1
+		n.Mutex.Unlock()
 	} else {
 		par.Mutex.Lock()
 
@@ -383,12 +391,32 @@ func (avlTree *AVLTree) attemptRemoveNode(par *AVLNode, n *AVLNode) (int, int) {
 		}
 
 		n.Mutex.Unlock()
+		par.Mutex.Unlock()
 
 		avlTree.Root.StoreHeight(avlTree.Root.Height())
 		avlTree.FixHeightAndRotate(avlTree.Root.Right)
 	}
 
 	return SUCCESS, prev
+}
+
+func WaitUntilNotChanging(avlNode *AVLNode) {
+	version := avlNode.LoadVersion()
+
+	if (version & (Growing | Shrinking)) != 0 {
+		i := 0
+
+		for avlNode.LoadVersion() == version && i < SpinCount {
+			i++
+		}
+
+		if i == SpinCount {
+			// synchronized (n) {}
+			avlNode.Mutex.Lock()
+			avlNode.Mutex.Unlock()
+		}
+
+	}
 }
 
 func (avlTree *AVLTree) attemptRemove(value int, node *AVLNode, direction int, nodeVersion int32) int {
@@ -412,6 +440,9 @@ func (avlTree *AVLTree) attemptRemove(value int, node *AVLNode, direction int, n
 			} else {
 				childVersion := child.LoadVersion()
 
+				// if (childVersion & Shrinking) != 0 {
+				// 	WaitUntilNotChanging(child)
+				// } else
 				if childVersion != Unlinked && node.Child(direction) == child {
 					if ((node.LoadVersion() ^ nodeVersion) & IgnoreGrow) != 0 {
 						return RETRY

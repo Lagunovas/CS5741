@@ -77,6 +77,9 @@ func (avlNode *AVLNode) SetChild(direction int, child *AVLNode) {
 	avlNode.Mutex.Lock()
 	defer avlNode.Mutex.Unlock()
 
+	child.Mutex.Lock()
+	defer child.Mutex.Unlock()
+
 	switch direction {
 	case -1:
 		avlNode.Left = child
@@ -89,6 +92,7 @@ func (avlNode *AVLNode) SetChild(direction int, child *AVLNode) {
 
 func (avlNode *AVLNode) CanUnlink() bool {
 	return avlNode.Left == nil || avlNode.Right == nil
+	// return avlNode == nil || avlNode.Left == nil || avlNode.Right == nil
 	// if avlNode != nil {
 	// 	if avlNode.Right == nil || avlNode.Left == nil {
 	// 		return 1

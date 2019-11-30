@@ -11,6 +11,7 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 	concurrentArrayCircularBuffer "github.com/CS5741/src/circularBuffer/concurrent/array"
 	circularBufferInterface "github.com/CS5741/src/circularBuffer/interface"
 
-	//concurrentBinaryTreeCircularBuffer "github.com/CS5741/src/circularBuffer/concurrent/binaryTree"
+	concurrentLinkedListCircularBuffer "github.com/CS5741/src/circularBuffer/concurrent/linkedList"
 
 	//=========> Stack
 	// concurrentArrayStack "github.com/CS5741/src/stack/concurrent/array"
@@ -32,7 +33,7 @@ type RequesteeInterface interface {
 }
 
 func main() {
-	//runtime.GOMAXPROCS(1)
+	// runtime.GOMAXPROCS(1)
 	var waitGroup sync.WaitGroup
 	var numberOfProducers int
 	var numberOfConsumers int
@@ -52,20 +53,43 @@ func main() {
 	// var binaryTreeStack stackInterface.StackInterface = concurrentBinaryTreeStack.NewConcurrentBinaryTreeStack()
 	// var linkedListStack stackInterface.StackInterface = concurrentLinkedListStack.NewConcurrentLinkedListStack()
 
-	var arrayBuffer circularBufferInterface.CircularBufferInterface = concurrentArrayCircularBuffer.NewConcurrentArrayCircularBuffer(5)
-	// var binaryTreeBuffer circularBufferInterface.CircularBufferInterface = concurrentBinaryTreeCircularBuffer.NewConcurrentBinaryTreeCircularBuffer(5)
+	var buffer circularBufferInterface.CircularBufferInterface
 	//var linkedListBuffer circularBufferInterface.CircularBufferInterface = concurrentLinkedListCircularBuffer.NewConcurrentCircularBuffer(5)
 	//fmt.Println(runtime.GOMAXPROCS(0))
 
-	startTime := time.Now()
+	var results []time.Duration
 
-	for i := 0; i < 1; i++ {
-		ProductionAndConsumption(numberOfProducers, numberOfConsumers, productionCapacity, consumptionCapacity, &waitGroup, arrayBuffer)
-		waitGroup.Wait()
+	var startTime time.Time
+
+	for mode := 0; mode < 2; mode++ {
+		switch mode {
+		case 0:
+			runtime.GOMAXPROCS(1)
+			fmt.Println("Non-Parallel")
+		case 1:
+			runtime.GOMAXPROCS(12)
+			fmt.Printf("Parallel - THREAD COUNT: %v\n", runtime.GOMAXPROCS(0))
+		}
+
+		for i := 0; i < 3; i++ {
+			switch i {
+			case 0:
+				buffer = concurrentArrayCircularBuffer.NewConcurrentArrayCircularBuffer(5)
+			case 1:
+				buffer = concurrentLinkedListCircularBuffer.NewConcurrentCircularBuffer(5)
+			}
+
+			for j := 0; j < 10; j++ {
+				startTime = time.Now()
+				ProductionAndConsumption(numberOfProducers, numberOfConsumers, productionCapacity, consumptionCapacity, &waitGroup, buffer)
+				waitGroup.Wait()
+				elapsedTime := time.Since(startTime)
+				results = append(results, elapsedTime)
+				fmt.Printf("time taken %s \n", results[len(results)-1])
+			}
+		}
 	}
 
-	elapsedTime := time.Since(startTime)
-	fmt.Printf("time taken %s \n", elapsedTime)
 }
 
 func ProductionAndConsumption(numberOfProducers, numberOfConsumers, productionCapacityOfProducers, consumptionCapacityOfConsumer int, waitGroup *sync.WaitGroup, datastructure interface{}) {
@@ -113,10 +137,6 @@ func CircularBufferProduction(id int, buffer circularBufferInterface.CircularBuf
 	for i := 1; i <= productionCapacityOfProducers; {
 		num := (productionCapacityOfProducers * id) + i
 
-		for buffer.Size() == buffer.Capacity() {
-			time.Sleep(1 * time.Millisecond)
-		}
-
 		val := buffer.Push(num)
 
 		if val {
@@ -134,7 +154,7 @@ func Consumer(requestee RequesteeInterface, consumptionCapacityOfConsumer int, w
 			//fmt.Printf("Consumer Consumed %d \n", val)
 			i++
 		} else {
-			time.Sleep(1 * time.Millisecond)
+			// time.Sleep(1 * time.Millisecond)
 			// fmt.Printf("FAIL - count: %v\n", i)
 		}
 	}

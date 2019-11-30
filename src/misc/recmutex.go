@@ -8,7 +8,6 @@ import (
 )
 
 type RecursiveMutex struct {
-	mutex            sync.Mutex
 	internalMutex    sync.Mutex
 	currentGoRoutine int64
 	lockCount        uint64

@@ -1,12 +1,3 @@
-// package producerConsumer
-
-// import(
-// 	"fmt"
-// )
-
-// type Producer struct{
-// 	id string
-// }
 package main
 
 import (
@@ -22,9 +13,9 @@ import (
 	concurrentLinkedListCircularBuffer "github.com/CS5741/src/circularBuffer/concurrent/linkedList"
 
 	//=========> Stack
-	// concurrentArrayStack "github.com/CS5741/src/stack/concurrent/array"
-	//concurrentBinaryTreeStack "github.com/CS5741/src/stack/concurrent/binaryTree"
-	//concurrentLinkedListStack "github.com/CS5741/src/stack/concurrent/linkedList"
+	concurrentArrayStack "github.com/CS5741/src/stack/concurrent/array"
+	concurrentBinaryTreeStack "github.com/CS5741/src/stack/concurrent/binaryTree"
+	concurrentLinkedListStack "github.com/CS5741/src/stack/concurrent/linkedList"
 	stackInterface "github.com/CS5741/src/stack/interface"
 )
 
@@ -53,9 +44,10 @@ func main() {
 	// var binaryTreeStack stackInterface.StackInterface = concurrentBinaryTreeStack.NewConcurrentBinaryTreeStack()
 	// var linkedListStack stackInterface.StackInterface = concurrentLinkedListStack.NewConcurrentLinkedListStack()
 
-	var buffer circularBufferInterface.CircularBufferInterface
 	//var linkedListBuffer circularBufferInterface.CircularBufferInterface = concurrentLinkedListCircularBuffer.NewConcurrentCircularBuffer(5)
 	//fmt.Println(runtime.GOMAXPROCS(0))
+
+	var dataStructure interface{}
 
 	var results []time.Duration
 
@@ -71,17 +63,28 @@ func main() {
 			fmt.Printf("Parallel - THREAD COUNT: %v\n", runtime.GOMAXPROCS(0))
 		}
 
-		for i := 0; i < 3; i++ {
+		for i := 0; i < 5; i++ {
 			switch i {
 			case 0:
-				buffer = concurrentArrayCircularBuffer.NewConcurrentArrayCircularBuffer(5)
+				fmt.Println("===== Array Circular Buffer =====")
+				dataStructure = concurrentArrayCircularBuffer.NewConcurrentArrayCircularBuffer(5)
 			case 1:
-				buffer = concurrentLinkedListCircularBuffer.NewConcurrentCircularBuffer(5)
+				fmt.Println("===== Linked List Circular Buffer =====")
+				dataStructure = concurrentLinkedListCircularBuffer.NewConcurrentCircularBuffer(5)
+			case 2:
+				fmt.Println("===== Array Stack =====")
+				dataStructure = concurrentArrayStack.NewConcurrentArrayStack()
+			case 3:
+				fmt.Println("===== Binary Tree Stack =====")
+				dataStructure = concurrentBinaryTreeStack.NewConcurrentBinaryTreeStack()
+			case 4:
+				fmt.Println("===== Linked List Stack =====")
+				dataStructure = concurrentLinkedListStack.NewConcurrentLinkedListStack()
 			}
 
 			for j := 0; j < 10; j++ {
 				startTime = time.Now()
-				ProductionAndConsumption(numberOfProducers, numberOfConsumers, productionCapacity, consumptionCapacity, &waitGroup, buffer)
+				ProductionAndConsumption(numberOfProducers, numberOfConsumers, productionCapacity, consumptionCapacity, &waitGroup, dataStructure)
 				waitGroup.Wait()
 				elapsedTime := time.Since(startTime)
 				results = append(results, elapsedTime)
@@ -126,7 +129,7 @@ func StackProduction(id int, stack stackInterface.StackInterface, productionCapa
 		num := (productionCapacityOfProducers * id) + i
 
 		stack.Push(num)
-		fmt.Printf("Producer Produced %d \n", num)
+		// fmt.Printf("Producer Produced %d \n", num)
 
 		//sleep
 		time.Sleep(1 * time.Millisecond)

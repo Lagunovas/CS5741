@@ -51,7 +51,7 @@ func NewAVLTree() *AVLTree {
 
 // =====================
 
-func attemptGet(value int, avlNode *AVLNode, direction int, nodeVersion int32) (int, int) { // -1 null, 0 retry, 1 found, value
+func attemptGet(value, worker int, avlNode *AVLNode, direction int, nodeVersion int32) (int, int) { // -1 null, 0 retry, 1 found, value
 	for {
 		child := avlNode.Child(direction)
 
@@ -60,14 +60,14 @@ func attemptGet(value int, avlNode *AVLNode, direction int, nodeVersion int32) (
 		}
 
 		if child == nil {
-			fmt.Println("Value not found")
+			fmt.Println("worker", worker, "Value not found")
 			return NIL, 0
 		}
 
 		nextDirection := Compare(value, child.Value)
 
 		if nextDirection == 0 {
-			fmt.Println("Value found")
+			//fmt.Println("Value found")
 			return SUCCESS, value
 		}
 
@@ -77,11 +77,11 @@ func attemptGet(value int, avlNode *AVLNode, direction int, nodeVersion int32) (
 			if ((avlNode.LoadVersion() ^ nodeVersion) & IgnoreGrow) != 0 {
 				return RETRY, 0
 			} else {
-				fmt.Printf("recursion - next direction: %v\n", nextDirection)
-				status, value := attemptGet(value, child, nextDirection, childVersion)
+				fmt.Printf("worker %d recursion of attempGet- next direction: %v\n", worker, nextDirection)
+				status, value := attemptGet(value, worker, child, nextDirection, childVersion)
 
 				if status != RETRY {
-					fmt.Println("Not retrying, return result")
+					//fmt.Println("Not retrying, return result")
 					return status, value
 				}
 			}
@@ -90,12 +90,13 @@ func attemptGet(value int, avlNode *AVLNode, direction int, nodeVersion int32) (
 	}
 }
 
-func (avlTree *AVLTree) Get(value int) int {
-	_, value = attemptGet(value, avlTree.Root, 1, 0)
+func (avlTree *AVLTree) Get(value, worker int) int {
+	fmt.Println("worker", worker, "called attemptGet")
+	_, value = attemptGet(value, worker, avlTree.Root, 1, 0)
 	return value
 }
 
-func (avlTree *AVLTree) attemptPut(value int, avlNode *AVLNode, direction int, nodeVersion int32) (int, int) {
+func (avlTree *AVLTree) attemptPut(value, worker int, avlNode *AVLNode, direction int, nodeVersion int32) (int, int) {
 	p := 0 // -1 null, 0 retry, 1 found, value
 	returnValue := value
 
@@ -110,7 +111,7 @@ func (avlTree *AVLTree) attemptPut(value int, avlNode *AVLNode, direction int, n
 			nextDirection := Compare(value, child.Value)
 
 			if nextDirection == 0 {
-				fmt.Println("attemptPut: value exists")
+				fmt.Println("worker ", worker, " attemptPut: value exists", value)
 				return EXISTING_VALUE, returnValue
 			} else {
 				childVersion := child.LoadVersion()
@@ -120,11 +121,11 @@ func (avlTree *AVLTree) attemptPut(value int, avlNode *AVLNode, direction int, n
 						fmt.Println("retry 2")
 						return RETRY, returnValue
 					}
-					p, returnValue = avlTree.attemptPut(value, child, nextDirection, childVersion)
+					p, returnValue = avlTree.attemptPut(value, worker, child, nextDirection, childVersion)
 				}
 			}
 		} else {
-			p = avlTree.attemptInsert(value, avlNode, direction, nodeVersion)
+			p = avlTree.attemptInsert(value, worker, avlNode, direction, nodeVersion)
 		}
 
 		if p != RETRY {
@@ -135,8 +136,9 @@ func (avlTree *AVLTree) attemptPut(value int, avlNode *AVLNode, direction int, n
 	return p, returnValue
 }
 
-func (avlTree *AVLTree) Put(value int) (int, int) {
-	return avlTree.attemptPut(value, avlTree.Root, 1, 0)
+func (avlTree *AVLTree) Put(value, worker int) (int, int) {
+	fmt.Println("worker ", worker, " attemptPut called")
+	return avlTree.attemptPut(value, worker, avlTree.Root, 1, 0)
 }
 
 func Balance(n *AVLNode) int64 {
@@ -169,10 +171,10 @@ func NodeStatus(n *AVLNode) int64 {
 
 	if n.Right != nil && n.Left != nil {
 		if Abs(n.Right.LoadHeight()-n.Left.LoadHeight()) > 1 {
-			return ROTATE // rotate
+			return ROTATE
 		}
 
-		return NOCHANGE // noChange
+		return NOCHANGE
 	} else if n.Right == nil {
 		if n.Left == nil || n.Left.LoadHeight() <= 1 {
 			return NOCHANGE
@@ -188,13 +190,16 @@ func NodeStatus(n *AVLNode) int64 {
 	}
 }
 
-func (avlTree *AVLTree) FixHeightAndRotate(node *AVLNode) {
+func (avlTree *AVLTree) FixHeightAndRotate(node *AVLNode, worker int) {
 	status := NodeStatus(node)
 
 	switch status {
 	case UNLINK:
+		fmt.Println("worker", worker, "called FixHeightAndRotate => Unlink")
 		avlTree.UnlinkNode(node)
 	case ROTATE:
+		fmt.Println("worker", worker, "called FixHeightAndRotate => Rotate")
+
 		if node == nil {
 			return
 		}
@@ -206,19 +211,19 @@ func (avlTree *AVLTree) FixHeightAndRotate(node *AVLNode) {
 
 		if balance >= 2 {
 			if Balance(node.Left) < 0 {
-				RotateLeft(node.Left)
+				RotateLeft(node.Left, worker)
 			}
-			RotateRight(node)
+			RotateRight(node, worker)
 		} else if Balance(node) <= -2 {
 			if Balance(node.Right) > 0 {
-				RotateRight(node.Right)
+				RotateRight(node.Right, worker)
 			}
-			RotateLeft(node)
+			RotateLeft(node, worker)
 		}
 	}
 }
 
-func (avlTree *AVLTree) attemptInsert(value int, avlNode *AVLNode, direction int, nodeVersion int32) int {
+func (avlTree *AVLTree) attemptInsert(value, worker int, avlNode *AVLNode, direction int, nodeVersion int32) int {
 	avlNode.Mutex.Lock()
 
 	firstCond := ((avlNode.LoadVersion() ^ nodeVersion) & IgnoreGrow) != 0
@@ -233,11 +238,12 @@ func (avlTree *AVLTree) attemptInsert(value int, avlNode *AVLNode, direction int
 	}
 
 	avlTree.Root.StoreHeight(avlTree.Root.Height())
-	avlTree.FixHeightAndRotate(avlTree.Root.Right)
+	avlTree.FixHeightAndRotate(avlTree.Root.Right, worker)
 	return SUCCESS
 }
 
-func RotateRight(n *AVLNode) {
+func RotateRight(n *AVLNode, worker int) {
+	fmt.Println("worker", worker, "called RotateRight")
 	nP := n.Parent
 	nL := n.Left
 	nLR := nL.Right
@@ -279,7 +285,8 @@ func RotateRight(n *AVLNode) {
 	n.StoreVersion(n.LoadVersion() + ShrinkCountIncrement)
 }
 
-func RotateLeft(n *AVLNode) {
+func RotateLeft(n *AVLNode, worker int) {
+	fmt.Println("worker", worker, "called RotateLeft ")
 	nP := n.Parent
 	nR := n.Right
 	nRL := nR.Left
@@ -339,7 +346,7 @@ func (avlTree *AVLTree) UnlinkNode(node *AVLNode) {
 	avlTree.Root.StoreHeight(avlTree.Root.Right.Height() + 1)
 }
 
-func (avlTree *AVLTree) attemptRemoveNode(par *AVLNode, n *AVLNode) (int, int) {
+func (avlTree *AVLTree) attemptRemoveNode(par *AVLNode, n *AVLNode, worker int) (int, int) {
 	if n.Value == -1 {
 		return NIL, -1
 	}
@@ -394,13 +401,13 @@ func (avlTree *AVLTree) attemptRemoveNode(par *AVLNode, n *AVLNode) (int, int) {
 		par.Mutex.Unlock()
 
 		avlTree.Root.StoreHeight(avlTree.Root.Height())
-		avlTree.FixHeightAndRotate(avlTree.Root.Right)
+		avlTree.FixHeightAndRotate(avlTree.Root.Right, worker)
 	}
 
 	return SUCCESS, prev
 }
 
-func (avlTree *AVLTree) attemptRemove(value int, node *AVLNode, direction int, nodeVersion int32) int {
+func (avlTree *AVLTree) attemptRemove(value, worker int, node *AVLNode, direction int, nodeVersion int32) int {
 	p := RETRY
 
 	for {
@@ -416,8 +423,9 @@ func (avlTree *AVLTree) attemptRemove(value int, node *AVLNode, direction int, n
 			nextDirection := Compare(value, child.Value)
 
 			if nextDirection == 0 {
-				fmt.Println("attemptRemove: found node, try to remove")
-				_, p = avlTree.attemptRemoveNode(node, child)
+				fmt.Println("worker", worker, " attemptRemove: found node, try to remove")
+				fmt.Println("worker", worker, "attemptRemoveNode")
+				_, p = avlTree.attemptRemoveNode(node, child, worker)
 			} else {
 				childVersion := child.LoadVersion()
 
@@ -429,7 +437,7 @@ func (avlTree *AVLTree) attemptRemove(value int, node *AVLNode, direction int, n
 						return RETRY
 					}
 
-					p = avlTree.attemptRemove(value, child, nextDirection, childVersion)
+					p = avlTree.attemptRemove(value, worker, child, nextDirection, childVersion)
 				}
 			}
 		}
@@ -442,8 +450,9 @@ func (avlTree *AVLTree) attemptRemove(value int, node *AVLNode, direction int, n
 	return p
 }
 
-func (avlTree *AVLTree) Remove(value int) int {
-	return avlTree.attemptRemove(value, avlTree.Root, 1, 0)
+func (avlTree *AVLTree) Remove(value, worker int) int {
+	fmt.Println("Worker", worker, "called attemptRemove")
+	return avlTree.attemptRemove(value, worker, avlTree.Root, 1, 0)
 }
 
 func (avlTree *AVLTree) PrintTree(avlNode *AVLNode) {
@@ -451,7 +460,7 @@ func (avlTree *AVLTree) PrintTree(avlNode *AVLNode) {
 		return
 	} else {
 		avlTree.PrintTree(avlNode.Left)
-		fmt.Printf("value: %v, height: %v\n", avlNode.Value, avlNode.LoadHeight())
+		fmt.Printf("Node => value: %v, height: %v\n", avlNode.Value, avlNode.LoadHeight())
 		avlTree.PrintTree(avlNode.Right)
 	}
 }
